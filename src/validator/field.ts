@@ -1,4 +1,13 @@
-import { type MaybeRef, type UnwrapRef, type Ref, ref, toValue, reactive, watch } from "vue";
+import {
+  type MaybeRef,
+  type UnwrapRef,
+  type Ref,
+  ref,
+  toValue,
+  reactive,
+  watch,
+  nextTick,
+} from "vue";
 import type { FormType } from "./form";
 
 export type AnyObject = Record<string, any>;
@@ -61,28 +70,28 @@ export function useField<T = string, K extends AnyObject = {}>(
   async function check() {
     if (skipCheck) {
       skipCheck = false;
+      isInvalid.value = false;
       return;
     }
-    let isValidValue = false;
+
     for (const key in errors) errors[key] = false;
 
+    let isValidValue = false;
     for (const [key, validator] of Object.entries(validators)) {
       let result = isFn(validator)
         ? validator(value.value, fields)
         : validator.check(value.value, fields);
 
-      if (isPromise(result)) {
-        result = await result;
-      }
+      if (isPromise(result)) result = await result;
 
       if (result) isValidValue = result;
       errors[key] = result;
     }
-    if (isInvalid.value !== isValidValue) isInvalid.value = isValidValue;
+    isInvalid.value = isValidValue;
 
     isChanged.value = true;
   }
-  let unwatch = watch(value, check);
+  watch(value, check);
 
   Object.values(validators).forEach((validator) => {
     if (!isFn(validator)) validator.initial({ value, check }, fields);
@@ -93,12 +102,14 @@ export function useField<T = string, K extends AnyObject = {}>(
     isInvalid.value = true;
   }
 
-  function reset() {
-    skipCheck = true;
-    value.value = toValue(initialValue) as any;
+  async function reset() {
     for (const key in errors) errors[key] = false;
+    value.value = toValue(initialValue) as any;
+    await nextTick();
+    skipCheck = true;
     isInvalid.value = false;
     isChanged.value = false;
+    for (const key in errors) errors[key] = false;
   }
 
   return { value, errors, isInvalid, isChanged, check, emitError, reset };
