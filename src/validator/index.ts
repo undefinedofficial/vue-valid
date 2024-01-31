@@ -82,6 +82,19 @@ export function equal<T>(key: keyof T): ValidationObj<T, any> {
 }
 
 /**
+ * A function that checks if the value of a specific key in a model is not equal to a given value.
+ *
+ * @param {string} key - the key of the value in the model to compare
+ * @returns {function} - a function that takes a value and a model as arguments and returns a boolean indicating if the value is not equal to the model's value for the specified key
+ */
+export function notEqual<T>(key: keyof T): ValidationObj<T, any> {
+  return {
+    initial: ({ check }, fields) => watch(fields[key], () => check()),
+    check: (value, model) => value === model[key].value,
+  };
+}
+
+/**
  *
  */
 export function checkFetch<T>(urlCallback: (value: T) => string): ValidationObj<T, any> {
