@@ -1,7 +1,7 @@
 {
   "name": "vue-valid",
   "description": "Simple and Fast Typescript Vue validator",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "files": [
     "src/validator/*"
   ],

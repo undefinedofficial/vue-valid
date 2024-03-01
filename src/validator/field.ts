@@ -35,7 +35,7 @@ export type ValidationObj<T, M extends AnyObject> = {
   check: ValidationFn<T, M>;
 };
 export type ValidationRecord<T, M extends AnyObject> = Record<
-  keyof M,
+  string,
   ValidationFn<T, M> | ValidationObj<T, M>
 >;
 export type ValidationErrors = Record<string, boolean>;
@@ -112,5 +112,18 @@ export function useField<T = string, K extends AnyObject = {}>(
     for (const key in errors) errors[key] = false;
   }
 
-  return { value, errors, isInvalid, isChanged, check, emitError, reset };
+  function addRule(key: string, rule: ValidationFn<T, K> | ValidationObj<T, K>) {
+    validators[key] = rule;
+    if (!isFn(rule)) rule.initial({ value, check }, fields);
+
+    check();
+  }
+
+  function removeRule(key: string) {
+    delete validators[key];
+
+    check();
+  }
+
+  return { value, errors, isInvalid, isChanged, check, emitError, reset, addRule, removeRule };
 }
